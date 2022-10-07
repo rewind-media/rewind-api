@@ -1,6 +1,6 @@
 FROM node
-WORKDIR /rewind/cron
-COPY . /rewind/cron
+WORKDIR /rewind/api
+COPY . .
 RUN rm node_modules -rf
 RUN npm run clean
 RUN npm install
