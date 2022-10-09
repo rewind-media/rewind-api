@@ -13,9 +13,9 @@
   "private": false,
   "dependencies": {
     "@jsbits/escape-regex-str": "^1.0.3",
-    "@rewind-media/rewind-common": "^0.1.37",
-    "@rewind-media/rewind-protocol": "^0.1.8",
-    "@rewind-media/rewind-web": "^0.1.4",
+    "@rewind-media/rewind-common": "^0.1.38",
+    "@rewind-media/rewind-protocol": "^0.1.10",
+    "@rewind-media/rewind-web": "^0.1.6",
     "@svgr/webpack": "^6.4.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -54,7 +54,7 @@
   },
   "scripts": {
     "start": "cd dist && node main.js",
-    "update": "npm update --save && git add package.json && git commit -m 'Dependency updates'",
+    "update": "npm update --save && ((! git diff --exit-code package.json > /dev/null && git add package.json && git commit -m 'Dependency updates') || true)",
     "prettier": "npx prettier --write .",
     "_build": "tsc",
     "_copy": "cp -r config dist",
