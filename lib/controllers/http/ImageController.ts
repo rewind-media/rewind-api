@@ -1,6 +1,6 @@
 import { Express } from "express";
 import { HttpController } from "./index";
-import {Database} from "@rewind-media/rewind-common";
+import { Database } from "@rewind-media/rewind-common";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 
 export class ImageController implements HttpController {

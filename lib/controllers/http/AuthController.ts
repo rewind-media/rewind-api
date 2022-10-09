@@ -1,7 +1,7 @@
 import { Express } from "express";
 import { AuthMiddleware } from "../../middleware/AuthMiddleware";
 import { HttpController } from "./index";
-import "../../declarations"
+import "../../declarations";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 
 export class AuthController implements HttpController {

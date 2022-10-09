@@ -18,21 +18,31 @@ import { Server } from "socket.io";
 import { SettingsController } from "./controllers/socket/SettingsController";
 import { ShowController } from "./controllers/socket/ShowController";
 import { ImageController } from "./controllers/http/ImageController";
-import {Database, loadConfig, mkMongoDatabase, mkRedisCache} from "@rewind-media/rewind-common";
-import {ServerLog} from "./log";
-import {ClientToServerEvents, ServerToClientEvents} from "@rewind-media/rewind-protocol";
+import {
+  Database,
+  loadConfig,
+  mkMongoDatabase,
+  mkRedisCache,
+} from "@rewind-media/rewind-common";
+import { ServerLog } from "./log";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@rewind-media/rewind-protocol";
 
 const log = ServerLog.getChildCategory("main");
 
-const config = loadConfig()
+const config = loadConfig();
 mkMongoDatabase(config.databaseConfig).then((db: Database) => {
   mkRedisCache(config.cacheConfig).then((cache) => {
     const app = express();
     const server = http.createServer(app);
-    const io = new Server<ClientToServerEvents,
-        ServerToClientEvents,
-        InterServerEvents,
-        SocketData>(server, {
+    const io = new Server<
+      ClientToServerEvents,
+      ServerToClientEvents,
+      InterServerEvents,
+      SocketData
+    >(server, {
       transports: ["websocket", "polling"],
     });
 
