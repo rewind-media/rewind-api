@@ -22,62 +22,67 @@ import {
   Database,
   loadConfig,
   mkMongoDatabase,
-  mkRedisCache,
+  RedisCache,
+  RedisJobQueue,
 } from "@rewind-media/rewind-common";
 import { ServerLog } from "./log";
 import {
   ClientToServerEvents,
   ServerToClientEvents,
+  StreamProps,
 } from "@rewind-media/rewind-protocol";
+import Redis from "ioredis";
 
 const log = ServerLog.getChildCategory("main");
-
 const config = loadConfig();
+const redis = new Redis(config.cacheConfig);
+const cache = new RedisCache(redis);
 mkMongoDatabase(config.databaseConfig).then((db: Database) => {
-  mkRedisCache(config.cacheConfig).then((cache) => {
-    const app = express();
-    const server = http.createServer(app);
-    const io = new Server<
-      ClientToServerEvents,
-      ServerToClientEvents,
-      InterServerEvents,
-      SocketData
-    >(server, {
-      transports: ["websocket", "polling"],
-    });
+  const app = express();
+  const server = http.createServer(app);
+  const io = new Server<
+    ClientToServerEvents,
+    ServerToClientEvents,
+    InterServerEvents,
+    SocketData
+  >(server, {
+    transports: ["websocket", "polling"],
+  });
+  const streamJobQueue = new RedisJobQueue<StreamProps, undefined>(
+    redis,
+    "Stream"
+  );
+  const homeController = new HomeController();
+  const streamController = new StreamController(cache);
 
-    const homeController = new HomeController();
-    const streamController = new StreamController(cache);
+  const settingsController = new SettingsController(db);
+  const watchController = new WatchController(db, cache, streamJobQueue);
+  const browseController = new BrowseController(db);
+  const showController = new ShowController(db);
+  const imageController = new ImageController(db);
+  const sessionMiddleware = new SessionMiddleware(db);
+  const parserMiddleware = new ParserMiddleware();
+  const authMiddleware = new AuthMiddleware(db);
+  const auth = new AuthController(authMiddleware);
 
-    const settingsController = new SettingsController(db);
-    const watchController = new WatchController(db, cache);
-    const browseController = new BrowseController(db);
-    const showController = new ShowController(db);
-    const imageController = new ImageController(db);
-    const sessionMiddleware = new SessionMiddleware(db);
-    const parserMiddleware = new ParserMiddleware();
-    const authMiddleware = new AuthMiddleware(db);
-    const auth = new AuthController(authMiddleware);
+  sessionMiddleware.attachHttp(app);
+  sessionMiddleware.attachSocket(io);
 
-    sessionMiddleware.attachHttp(app);
-    sessionMiddleware.attachSocket(io);
+  parserMiddleware.attachHttp(app);
+  authMiddleware.attachHttp(app);
+  authMiddleware.attachSocket(io);
 
-    parserMiddleware.attachHttp(app);
-    authMiddleware.attachHttp(app);
-    authMiddleware.attachSocket(io);
+  auth.attach(app);
 
-    auth.attach(app);
+  homeController.attach(app);
+  streamController.attach(app);
+  imageController.attach(app);
+  watchController.attach(io);
+  browseController.attach(io);
+  settingsController.attach(io);
+  showController.attach(io);
 
-    homeController.attach(app);
-    streamController.attach(app);
-    imageController.attach(app);
-    watchController.attach(io);
-    browseController.attach(io);
-    settingsController.attach(io);
-    showController.attach(io);
-
-    server.listen(8080, () => {
-      log.info(`Rewind listening on port ${8080}`);
-    });
+  server.listen(8080, () => {
+    log.info(`Rewind listening on port ${8080}`);
   });
 });

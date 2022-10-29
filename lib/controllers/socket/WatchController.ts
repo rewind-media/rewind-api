@@ -14,7 +14,12 @@ import {
   ShowEpisodeInfo,
   StreamProps,
 } from "@rewind-media/rewind-protocol";
-import { Database, JobQueue, Cache } from "@rewind-media/rewind-common";
+import {
+  Database,
+  JobQueue,
+  Cache,
+  JobStatus,
+} from "@rewind-media/rewind-common";
 import formatM3u8Path = ServerRoutes.Api.Stream.formatM3u8Path;
 import { flow, filter, first } from "lodash/fp";
 import { filterNotNil } from "cantaloupe";
@@ -53,15 +58,17 @@ type CreateStreamFunction = (props: StreamProps) => Promise<void>;
 export class WatchController implements SocketController {
   private db: Database;
   private cache: Cache;
-  private jobQueue: JobQueue;
   // TODO this could technically grow infinitely, and is also not shared amongst instances - move it to redis with expiration
-  private streamJobMap: Map<string, string> = new Map<string, string>();
-  private jobStreamMap: Map<string, string> = new Map<string, string>();
+  private streamJobQueue: JobQueue<StreamProps, undefined>;
 
-  constructor(db: Database, cache: Cache) {
+  constructor(
+    db: Database,
+    cache: Cache,
+    streamJobQueue: JobQueue<StreamProps, undefined>
+  ) {
     this.db = db;
     this.cache = cache;
-    this.jobQueue = this.cache.getJobQueue("JobQueue");
+    this.streamJobQueue = streamJobQueue;
   }
 
   private getStreamId(socket: SocketIoServerSocket): Promise<string | null> {
@@ -84,12 +91,28 @@ export class WatchController implements SocketController {
     return this.cache.del(`ClientId:${socket.id}:StreamId`);
   }
 
+  private getJobId(streamId: string): Promise<string | null> {
+    return this.cache.get(`StreamId:${streamId}:JobId`);
+  }
+
+  private delJobId(streamId: string): Promise<void> {
+    return this.cache.del(`StreamId:${streamId}:JobId`);
+  }
+
+  private setJobId(streamId: string, jobId: string) {
+    // TODO exp Should be based on duration of stream
+    return this.cache.put(`StreamId:${streamId}:JobId`, jobId, nowPlusOneDay());
+  }
   mkCancelStreamHandler(socket: SocketIoServerSocket): DestroyStreamFunction {
     return async () => {
-      const jobId = await this.getStreamId(socket);
-      if (jobId) {
-        await this.jobQueue.update(jobId, "cancel", nowPlusOneHour());
+      const streamId = await this.getStreamId(socket);
+      if (streamId) {
+        const jobId = await this.getJobId(streamId);
+        if (jobId) {
+          await this.streamJobQueue.cancel(jobId);
+        }
         await this.delStreamId(socket);
+        await this.delJobId(streamId);
       }
     };
   }
@@ -97,16 +120,20 @@ export class WatchController implements SocketController {
   mkCreateStreamFunction(socket: SocketIoServerSocket): CreateStreamFunction {
     return async (streamProps) => {
       await this.setStreamId(socket, streamProps);
-      const jobEventEmitter = await this.jobQueue.publish({
-        id: streamProps.id,
+      const jobId = await this.streamJobQueue.submit({
         payload: streamProps,
       });
 
-      jobEventEmitter.on("start", () => {
-        socket.emit("createStreamCallback", {
-          streamProps: WatchController.toHlsStreamProps(streamProps),
-        });
+      this.streamJobQueue.monitor(jobId).on("status", (status) => {
+        switch (status) {
+          case JobStatus.START:
+            socket.emit("createStreamCallback", {
+              streamProps: WatchController.toHlsStreamProps(streamProps),
+            });
+        }
       });
+
+      await this.setJobId(streamProps.id, jobId);
     };
   }
 
