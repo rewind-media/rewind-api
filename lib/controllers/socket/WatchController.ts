@@ -111,8 +111,21 @@ export class WatchController implements SocketController {
         if (jobId) {
           await this.streamJobQueue.cancel(jobId);
         }
-        await this.delStreamId(socket);
-        await this.delJobId(streamId);
+
+        const streamMetadata = await this.cache.getStreamMetadata(streamId);
+        if (streamMetadata) {
+          await Promise.all(
+            streamMetadata.segments.map((segment) =>
+              this.cache.delSegmentM4s(streamId, segment.index)
+            )
+          );
+        }
+        await Promise.all([
+          this.cache.delStreamMetadata(streamId),
+          this.cache.delInitMp4(streamId),
+          this.delStreamId(socket),
+          this.delJobId(streamId),
+        ]);
       }
     };
   }

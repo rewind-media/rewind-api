@@ -1,6 +1,10 @@
 import { Express } from "express";
 import { HttpController } from "./index";
-import { Cache } from "@rewind-media/rewind-common";
+import {
+  Cache,
+  StreamMetadata,
+  StreamSegmentMetadata,
+} from "@rewind-media/rewind-common";
 import { ServerLog } from "../../log";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 const log = ServerLog.getChildCategory("StreamController");
@@ -17,13 +21,16 @@ export class StreamController implements HttpController {
         log.debug(
           "In stream playlist handler: " + JSON.stringify(req.isAuthenticated())
         );
-        const streamM3u8 = await this.cache.getM3u8(req.params.id);
-        if (streamM3u8) {
+        const streamMetadata = await this.cache.getStreamMetadata(
+          req.params.id
+        );
+        if (streamMetadata) {
           res.writeHead(200, {
             "Content-Type": "application/vnd.apple.mpegurl",
           });
-          res.end(streamM3u8);
+          res.end(mkM3u8(streamMetadata));
         } else {
+          log.warn(`Stream ${req.params.id} - no metadata found.`);
           res.sendStatus(400);
         }
       } else {
@@ -39,6 +46,9 @@ export class StreamController implements HttpController {
           res.writeHead(200, { "Content-Type": "video/mp4" });
           res.end(initMp4);
         } else {
+          log.warn(
+            `Stream ${req.params.id} - no ${ServerRoutes.Api.Stream.initMp4} found.`
+          );
           res.sendStatus(400);
         }
       } else {
@@ -57,6 +67,9 @@ export class StreamController implements HttpController {
           res.writeHead(200, { "Content-Type": "video/mp4" });
           res.end(segmentObject);
         } else {
+          log.warn(
+            `Stream ${req.params.id} - segment ${req.params.segment} not found.`
+          );
           res.sendStatus(400);
         }
       } else {
@@ -64,4 +77,20 @@ export class StreamController implements HttpController {
       }
     });
   }
+}
+
+function mkM3u8(streamMetadata: StreamMetadata) {
+  return (
+    "#EXTM3U\n" +
+    "#EXT-X-VERSION:7\n" +
+    "#EXT-X-TARGETDURATION:5\n" +
+    "#EXT-X-MEDIA-SEQUENCE:0\n" +
+    '#EXT-X-MAP:URI="init-stream.mp4"\n' +
+    streamMetadata.segments
+      .map(
+        (seg: StreamSegmentMetadata) =>
+          `#EXTINF:${seg.duration},\n${seg.index}.m4s\n`
+      )
+      .join("")
+  );
 }
