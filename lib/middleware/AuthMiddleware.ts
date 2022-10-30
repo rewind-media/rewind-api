@@ -5,7 +5,7 @@ import * as pp from "passport";
 import * as ppl from "passport-local";
 import crypto from "crypto";
 import { SocketIoServer } from "../controllers/socket";
-import { Database, hash } from "@rewind-media/rewind-common";
+import { Database, hashPassword } from "@rewind-media/rewind-common";
 import { ServerLog } from "../log";
 
 const log = ServerLog.getChildCategory("AuthMiddleware");
@@ -63,7 +63,7 @@ export class AuthMiddleware implements HttpMiddleware, SocketMiddleware {
             });
           }
 
-          hash.hashPassword(password, user.salt).then((hashedPass) => {
+          hashPassword(password, user.salt).then((hashedPass) => {
             if (!crypto.timingSafeEqual(user.hashedPass, hashedPass)) {
               return cb(null, false, {
                 message: "Incorrect username or password.",

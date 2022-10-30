@@ -9,7 +9,7 @@ import { Handshake } from "socket.io";
 import { randomUUID } from "crypto";
 import crypto from "crypto";
 import { ServerLog } from "../../log";
-import { Database, hash } from "@rewind-media/rewind-common";
+import { Database, hashPassword } from "@rewind-media/rewind-common";
 import "@rewind-media/rewind-protocol";
 import {
   ChangePasswordRequest,
@@ -60,8 +60,7 @@ export class SettingsController implements SocketController {
         (socket.handshake as Handshake)?.session?.user?.permissions?.isAdmin
       ) {
         const salt = randomUUID();
-        hash
-          .hashPassword(req.password, salt)
+        hashPassword(req.password, salt)
           .then((hashedPass) =>
             this.db.putUser({
               username: req.username,
@@ -90,28 +89,26 @@ export class SettingsController implements SocketController {
       if (username) {
         this.db.getUser(username).then((user) =>
           user
-            ? hash
-                .hashPassword(req.oldPassword, user.salt)
-                .then((hashedOldPass) => {
-                  if (crypto.timingSafeEqual(user.hashedPass, hashedOldPass)) {
-                    const newSalt = randomUUID();
-                    hash
-                      .hashPassword(req.newPassword, newSalt)
-                      .then((hashedNewPass) => {
-                        return this.db
-                          .putUser({
-                            ...user,
-                            hashedPass: hashedNewPass,
-                            salt: newSalt,
-                          })
-                          .then((res) => {
-                            socket.emit("changePasswordCallback", {
-                              success: res ?? false,
-                            });
+            ? hashPassword(req.oldPassword, user.salt).then((hashedOldPass) => {
+                if (crypto.timingSafeEqual(user.hashedPass, hashedOldPass)) {
+                  const newSalt = randomUUID();
+                  hashPassword(req.newPassword, newSalt).then(
+                    (hashedNewPass) => {
+                      return this.db
+                        .putUser({
+                          ...user,
+                          hashedPass: hashedNewPass,
+                          salt: newSalt,
+                        })
+                        .then((res) => {
+                          socket.emit("changePasswordCallback", {
+                            success: res ?? false,
                           });
-                      });
-                  }
-                })
+                        });
+                    }
+                  );
+                }
+              })
             : fail()
         );
       } else {

@@ -10,7 +10,7 @@ import { ServerLog } from "../log";
 const log = ServerLog.getChildCategory("SessionMiddleware");
 
 export class SessionMiddleware implements HttpMiddleware, SocketMiddleware {
-  private session: RequestHandler;
+  private readonly session: RequestHandler;
   constructor(db: Database) {
     this.session = session({
       genid: (req: Express.Request) => {
