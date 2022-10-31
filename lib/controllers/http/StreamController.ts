@@ -91,6 +91,7 @@ function mkM3u8(streamMetadata: StreamMetadata) {
         (seg: StreamSegmentMetadata) =>
           `#EXTINF:${seg.duration},\n${seg.index}.m4s\n`
       )
-      .join("")
+      .join("") +
+    (streamMetadata.complete ? "#EXT-X-ENDLIST\n" : "")
   );
 }

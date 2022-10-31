@@ -108,6 +108,7 @@ export class WatchController implements SocketController {
       const streamId = await this.getStreamId(socket);
       if (streamId) {
         const jobId = await this.getJobId(streamId);
+        await this.delJobId(streamId);
         if (jobId) {
           await this.streamJobQueue.cancel(jobId);
         }
@@ -124,7 +125,6 @@ export class WatchController implements SocketController {
           this.cache.delStreamMetadata(streamId),
           this.cache.delInitMp4(streamId),
           this.delStreamId(socket),
-          this.delJobId(streamId),
         ]);
       }
     };
