@@ -2,6 +2,11 @@ import {
   StreamController,
   AuthController,
   HomeController,
+  ShowController,
+  SeasonController,
+  LibraryController,
+  EpisodeController,
+  SettingsController,
 } from "./controllers/http";
 import express from "express";
 import http from "http";
@@ -13,10 +18,7 @@ import {
 import { SessionMiddleware } from "./middleware/SessionMiddleware";
 import { ParserMiddleware } from "./middleware/ParserMiddleware";
 import { AuthMiddleware } from "./middleware/AuthMiddleware";
-import { BrowseController } from "./controllers/socket";
 import { Server } from "socket.io";
-import { SettingsController } from "./controllers/socket/SettingsController";
-import { ShowController } from "./controllers/socket/ShowController";
 import { ImageController } from "./controllers/http/ImageController";
 import {
   Database,
@@ -57,8 +59,10 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
 
   const settingsController = new SettingsController(db);
   const watchController = new WatchController(db, cache, streamJobQueue);
-  const browseController = new BrowseController(db);
+  const libraryController = new LibraryController(db);
   const showController = new ShowController(db);
+  const seasonController = new SeasonController(db);
+  const episodeController = new EpisodeController(db);
   const imageController = new ImageController(db);
   const sessionMiddleware = new SessionMiddleware(db);
   const parserMiddleware = new ParserMiddleware();
@@ -77,10 +81,13 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
   homeController.attach(app);
   streamController.attach(app);
   imageController.attach(app);
+  libraryController.attach(app);
+  showController.attach(app);
+  seasonController.attach(app);
+  episodeController.attach(app);
+  settingsController.attach(app);
+
   watchController.attach(io);
-  browseController.attach(io);
-  settingsController.attach(io);
-  showController.attach(io);
 
   server.listen(8080, () => {
     log.info(`Rewind listening on port ${8080}`);

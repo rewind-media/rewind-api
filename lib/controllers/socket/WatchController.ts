@@ -11,7 +11,7 @@ import {
   Library,
   LibraryType,
   ServerRoutes,
-  ShowEpisodeInfo,
+  EpisodeInfo,
   StreamProps,
 } from "@rewind-media/rewind-protocol";
 import {
@@ -28,7 +28,7 @@ import { isNil } from "lodash";
 
 const log = ServerLog.getChildCategory("WatchController");
 
-function extractDuration(media: ShowEpisodeInfo) {
+function extractDuration(media: EpisodeInfo) {
   return (
     media.info.format.duration ||
     first(
@@ -40,7 +40,7 @@ function extractDuration(media: ShowEpisodeInfo) {
   );
 }
 
-function mkStreamProps(media: ShowEpisodeInfo, startOffset: number) {
+function mkStreamProps(media: EpisodeInfo, startOffset: number) {
   const duration = extractDuration(media)!!;
   const streamProps: StreamProps = {
     mediaInfo: media,
@@ -192,7 +192,7 @@ export class WatchController implements SocketController {
     if (library) {
       switch (library.type) {
         case LibraryType.Show:
-          return this.db.getShowEpisode(props.mediaId);
+          return this.db.getEpisode(props.mediaId);
         case LibraryType.File:
           throw "File type library cannot be streamed";
       }

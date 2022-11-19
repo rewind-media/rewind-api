@@ -4,7 +4,6 @@ import {
 } from "@rewind-media/rewind-protocol";
 import { Server, Socket } from "socket.io";
 
-export { BrowseController } from "./BrowseController";
 export { WatchController } from "./WatchController";
 
 export interface SocketController {
