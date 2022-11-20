@@ -30,6 +30,7 @@ import {
 import { ServerLog } from "./log";
 import {
   ClientToServerEvents,
+  ImageInfo,
   ServerToClientEvents,
   StreamProps,
 } from "@rewind-media/rewind-protocol";
@@ -54,6 +55,7 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
     redis,
     "Stream"
   );
+  const imageJobQueue = new RedisJobQueue<ImageInfo, undefined>(redis, "Image");
   const homeController = new HomeController();
   const streamController = new StreamController(cache);
 
@@ -63,7 +65,7 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
   const showController = new ShowController(db);
   const seasonController = new SeasonController(db);
   const episodeController = new EpisodeController(db);
-  const imageController = new ImageController(db);
+  const imageController = new ImageController(db, cache, imageJobQueue);
   const sessionMiddleware = new SessionMiddleware(db);
   const parserMiddleware = new ParserMiddleware();
   const authMiddleware = new AuthMiddleware(db);
