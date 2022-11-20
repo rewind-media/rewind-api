@@ -35,7 +35,7 @@ export class AuthController implements HttpController {
           req.session.user = req.user;
           req.session.save();
         }
-        res.redirect(ServerRoutes.Web.Home.Browser.root);
+        res.redirect(ServerRoutes.Web.Private.Browse.home);
       }
     );
     app.post(ServerRoutes.Api.Auth.logout, function (req, res) {
