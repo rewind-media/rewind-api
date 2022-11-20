@@ -43,24 +43,26 @@ export class ImageController implements HttpController {
         res.sendStatus(404);
         return;
       }
-      const jobId = await this.queue.submit({ payload: imageInfo });
-      return new Promise((resolve) => {
-        this.queue
-          .monitor(jobId)
-          .on("success", async () => {
-            const image = await fetchImage();
-            if (image) {
-              res.end(image);
-            } else {
+
+      return new Promise(async (resolve) => {
+        await this.queue.submit({ payload: imageInfo }, (emitter) => {
+          emitter
+            .on("success", async () => {
+              log.info(`Job succeeded for Image ${imageInfo.id}`);
+              const image = await fetchImage();
+              if (image) {
+                res.end(image);
+              } else {
+                res.sendStatus(501);
+              }
+              resolve(undefined);
+            })
+            .on("fail", (reason) => {
               res.sendStatus(501);
-            }
-            resolve(undefined);
-          })
-          .on("fail", (reason) => {
-            res.sendStatus(501);
-            log.error(reason);
-            resolve(undefined);
-          });
+              log.error(`Job failed for Image ${imageInfo.id}`, reason);
+              resolve(undefined);
+            });
+        });
       });
     });
   }

@@ -133,18 +133,20 @@ export class WatchController implements SocketController {
   mkCreateStreamFunction(socket: SocketIoServerSocket): CreateStreamFunction {
     return async (streamProps) => {
       await this.setStreamId(socket, streamProps);
-      const jobId = await this.streamJobQueue.submit({
-        payload: streamProps,
-      });
-
-      this.streamJobQueue.monitor(jobId).on("status", (status) => {
-        switch (status) {
-          case JobStatus.START:
-            socket.emit("createStreamCallback", {
-              streamProps: WatchController.toHlsStreamProps(streamProps),
-            });
-        }
-      });
+      const jobId = await this.streamJobQueue.submit(
+        {
+          payload: streamProps,
+        },
+        (emitter) =>
+          emitter.on("status", (status) => {
+            switch (status) {
+              case JobStatus.START:
+                socket.emit("createStreamCallback", {
+                  streamProps: WatchController.toHlsStreamProps(streamProps),
+                });
+            }
+          })
+      );
 
       await this.setJobId(streamProps.id, jobId);
     };
