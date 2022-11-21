@@ -4,7 +4,7 @@ import { Express, Request, Response } from "express";
 import { HttpController } from "./index";
 import { ServerRoutes, SeasonInfo } from "@rewind-media/rewind-protocol";
 
-const log = ServerLog.getChildCategory("WatchController");
+const log = ServerLog.getChildCategory("SeasonController");
 
 export class SeasonController implements HttpController {
   private db: Database;
