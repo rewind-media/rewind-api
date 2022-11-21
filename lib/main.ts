@@ -80,7 +80,6 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
 
   auth.attach(app);
 
-  homeController.attach(app);
   streamController.attach(app);
   imageController.attach(app);
   libraryController.attach(app);
@@ -88,6 +87,7 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
   seasonController.attach(app);
   episodeController.attach(app);
   settingsController.attach(app);
+  homeController.attach(app); // last to catch all
 
   watchController.attach(io);
 

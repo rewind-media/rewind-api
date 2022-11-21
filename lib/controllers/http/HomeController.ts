@@ -4,12 +4,23 @@ import { HttpController } from "./index";
 
 export class HomeController implements HttpController {
   attach(app: Express): void {
-    app.use(
-      ServerRoutes.root,
-      express.static("../node_modules/@rewind-media/rewind-web/webpack")
-    );
+    app.get(ServerRoutes.indexHtml, (req, res, next) => {
+      res.sendFile("index.html", {
+        root: "../node_modules/@rewind-media/rewind-web/webpack/",
+      });
+    });
+    app.get(ServerRoutes.indexJs, (req, res, next) => {
+      res.sendFile("index.js", {
+        root: "../node_modules/@rewind-media/rewind-web/webpack/",
+      });
+    });
+    app.get(ServerRoutes.manifest, (req, res, next) => {
+      res.sendFile("manifest.json", {
+        root: "../node_modules/@rewind-media/rewind-web/webpack/",
+      });
+    });
 
-    app.use(ServerRoutes.Web.root, (req, res, next) => {
+    app.get(ServerRoutes.catchAll, (req, res, next) => {
       res.sendFile("index.html", {
         root: "../node_modules/@rewind-media/rewind-web/webpack/",
       });
