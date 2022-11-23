@@ -8,6 +8,7 @@ export * from "./ShowController";
 export * from "./SeasonController";
 export * from "./EpisodeController";
 export * from "./SettingsController";
+export * from "./IconController";
 
 export interface HttpController {
   attach: (app: Express) => void;

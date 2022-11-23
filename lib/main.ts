@@ -7,6 +7,7 @@ import {
   LibraryController,
   EpisodeController,
   SettingsController,
+  IconController,
 } from "./controllers/http";
 import express from "express";
 import http from "http";
@@ -35,12 +36,14 @@ import {
   StreamProps,
 } from "@rewind-media/rewind-protocol";
 import Redis from "ioredis";
+import { loadFavIcons } from "./favicons";
 
 const log = ServerLog.getChildCategory("main");
 const config = loadConfig();
 const redis = new Redis(config.cacheConfig);
 const cache = new RedisCache(redis);
-mkMongoDatabase(config.databaseConfig).then((db: Database) => {
+mkMongoDatabase(config.databaseConfig).then(async (db: Database) => {
+  const favIcons = await loadFavIcons();
   const app = express();
   const server = http.createServer(app);
   const io = new Server<
@@ -60,6 +63,7 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
   const streamController = new StreamController(cache);
 
   const settingsController = new SettingsController(db);
+  const iconController = new IconController(favIcons);
   const watchController = new WatchController(db, cache, streamJobQueue);
   const libraryController = new LibraryController(db);
   const showController = new ShowController(db);
@@ -81,6 +85,7 @@ mkMongoDatabase(config.databaseConfig).then((db: Database) => {
   auth.attach(app);
 
   streamController.attach(app);
+  iconController.attach(app);
   imageController.attach(app);
   libraryController.attach(app);
   showController.attach(app);
