@@ -6,7 +6,7 @@ import {
 } from "./index";
 import { ServerLog } from "../../log";
 import {
-  CreateHlsStreamRequest,
+  CreateEpisodeHlsStreamRequest,
   HlsStreamProps,
   Library,
   LibraryType,
@@ -20,11 +20,11 @@ import {
   Cache,
   JobStatus,
 } from "@rewind-media/rewind-common";
-import formatM3u8Path = ServerRoutes.Api.Stream.formatM3u8Path;
 import { flow, filter, first } from "lodash/fp";
 import { filterNotNil } from "cantaloupe";
 import { FFProbeStream } from "ffprobe";
 import { isNil } from "lodash";
+import formatM3u8IndexPath = ServerRoutes.Api.Stream.formatM3u8IndexPath;
 
 const log = ServerLog.getChildCategory("WatchController");
 
@@ -40,12 +40,18 @@ function extractDuration(media: EpisodeInfo) {
   );
 }
 
-function mkStreamProps(media: EpisodeInfo, startOffset: number) {
+function mkStreamProps(
+  media: EpisodeInfo,
+  request: CreateEpisodeHlsStreamRequest
+) {
   const duration = extractDuration(media)!!;
   const streamProps: StreamProps = {
     mediaInfo: media,
     id: randomUUID(),
-    startOffset: startOffset,
+    startOffset: request.startOffset,
+    subtitle: request.subtitles,
+    videoStream: request.videoStream,
+    audioStream: request.audioStream,
     duration: duration,
   };
   return streamProps;
@@ -172,11 +178,11 @@ export class WatchController implements SocketController {
     destroyStreamFunction: DestroyStreamFunction,
     createStreamFunction: CreateStreamFunction
   ) {
-    return async (props: CreateHlsStreamRequest) => {
+    return async (props: CreateEpisodeHlsStreamRequest) => {
       await this.db
         .getLibrary(props.library)
         .then((library) => this.retrieveMedia(props, library!!))
-        .then((media) => mkStreamProps(media!!, props.startOffset))
+        .then((media) => mkStreamProps(media!!, props))
         .then((streamProps) =>
           destroyStreamFunction().then(() => createStreamFunction(streamProps))
         )
@@ -190,7 +196,10 @@ export class WatchController implements SocketController {
     };
   }
 
-  private retrieveMedia(props: CreateHlsStreamRequest, library: Library) {
+  private retrieveMedia(
+    props: CreateEpisodeHlsStreamRequest,
+    library: Library
+  ) {
     if (library) {
       switch (library.type) {
         case LibraryType.Show:
@@ -206,7 +215,7 @@ export class WatchController implements SocketController {
   private static toHlsStreamProps(sp: StreamProps): HlsStreamProps {
     return {
       ...sp,
-      url: formatM3u8Path(sp.id),
+      url: formatM3u8IndexPath(sp.id),
     };
   }
 }
