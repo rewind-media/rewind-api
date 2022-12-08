@@ -2,7 +2,7 @@ import { Express } from "express";
 import { HttpController } from "./index";
 import { Database, Cache } from "@rewind-media/rewind-common";
 import { ImageInfo, ServerRoutes } from "@rewind-media/rewind-protocol";
-import { JobQueue } from "@rewind-media/rewind-common/lib";
+import { JobQueue } from "@rewind-media/rewind-common";
 import { ServerLog } from "../../log";
 
 const log = ServerLog.getChildCategory("ImageController");
