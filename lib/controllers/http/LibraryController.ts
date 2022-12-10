@@ -1,8 +1,8 @@
 import { HttpController } from ".";
 import { Database } from "@rewind-media/rewind-common";
 import { ServerLog } from "../../log";
-import { Express, Request, Response, NextFunction } from "express";
-import { ShowInfo, ServerRoutes } from "@rewind-media/rewind-protocol";
+import { Express, Request, Response } from "express";
+import { ServerRoutes } from "@rewind-media/rewind-protocol";
 
 const log = ServerLog.getChildCategory("LibraryController");
 
@@ -18,8 +18,7 @@ export class LibraryController implements HttpController {
       ServerRoutes.Api.Library.list,
       (
         req: Request<{}, ServerRoutes.Api.Library.ListResponse>,
-        res: Response<ServerRoutes.Api.Library.ListResponse>,
-        next: NextFunction
+        res: Response<ServerRoutes.Api.Library.ListResponse>
       ) => {
         this.db.listLibraries().then((libs) =>
           res.send({
@@ -31,11 +30,7 @@ export class LibraryController implements HttpController {
 
     app.get(
       ServerRoutes.Api.Library.get,
-      (
-        req: Request<ServerRoutes.Api.Library.GetParams>,
-        res: Response,
-        next: NextFunction
-      ) => {
+      (req: Request<ServerRoutes.Api.Library.GetParams>, res: Response) => {
         this.db.getLibrary(req.params.libraryId).then((library) => {
           if (library) {
             res.send({

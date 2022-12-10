@@ -29,13 +29,13 @@ export class AuthController implements HttpController {
         session: true,
       }),
       function (req, res) {
-        // TODO make this reload the page instead of redirecting to root. Something like below.
-        // res.location("back"); // 'back' has a special meaning here
         if (req.user) {
           req.session.user = req.user;
           req.session.save();
+          res.sendStatus(200);
+        } else {
+          res.sendStatus(403);
         }
-        res.sendStatus(200);
       }
     );
     app.post(ServerRoutes.Api.Auth.logout, function (req, res) {

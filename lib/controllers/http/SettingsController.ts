@@ -22,8 +22,7 @@ export class SettingsController implements HttpController {
       ServerRoutes.Api.User.list,
       (
         req: Request<{}, ServerRoutes.Api.User.ListResponse>,
-        res: Response<ServerRoutes.Api.User.ListResponse>,
-        next: NextFunction
+        res: Response<ServerRoutes.Api.User.ListResponse>
       ) => {
         if (req.session.user?.permissions?.isAdmin) {
           this.db.listUsers().then((users) => {
@@ -37,8 +36,7 @@ export class SettingsController implements HttpController {
       ServerRoutes.Api.User.create,
       async (
         req: Request<{}, {}, ServerRoutes.Api.User.CreateRequest>,
-        res: Response<{}>,
-        next: NextFunction
+        res: Response<{}>
       ) => {
         try {
           if (await this.db.getUser(req.body.user.username)) {
@@ -75,39 +73,44 @@ export class SettingsController implements HttpController {
 
     app.post(
       ServerRoutes.Api.User.changePassword,
-      (
+      async (
         req: Request<{}, {}, ServerRoutes.Api.User.ChangePasswordRequest>,
-        res: Response<{}>,
-        next: NextFunction
+        res: Response<{}>
       ) => {
         const username = req.session.user?.username;
-        if (username) {
-          this.db.getUser(username).then((user) =>
-            user
-              ? hashPassword(req.body.oldPassword, user.salt).then(
-                  (hashedOldPass) => {
-                    if (
-                      crypto.timingSafeEqual(user.hashedPass, hashedOldPass)
-                    ) {
-                      const newSalt = randomUUID();
-                      hashPassword(req.body.newPassword, newSalt).then(
-                        (hashedNewPass) => {
-                          return this.db
-                            .putUser({
-                              ...user,
-                              hashedPass: hashedNewPass,
-                              salt: newSalt,
-                            })
-                            .then((result) => {
-                              res.sendStatus(result ? 200 : 500);
-                            });
-                        }
-                      );
-                    }
-                  }
-                )
-              : fail()
+        const fail = () => {
+          res.sendStatus(403);
+        };
+        if (!username) {
+          log.error("No username in changePassword request", req);
+          fail();
+          return;
+        }
+        const user = await this.db.getUser(username);
+        if (!user) {
+          log.error(
+            "Username not found in database for changePassword request",
+            req
           );
+          fail();
+          return;
+        }
+        const hashedOldPass = await hashPassword(
+          req.body.oldPassword,
+          user.salt
+        );
+        if (crypto.timingSafeEqual(user.hashedPass, hashedOldPass)) {
+          const newSalt = randomUUID();
+          const hashedNewPass = await hashPassword(
+            req.body.newPassword,
+            newSalt
+          );
+          const result = await this.db.putUser({
+            ...user,
+            hashedPass: hashedNewPass,
+            salt: newSalt,
+          });
+          res.sendStatus(result ? 200 : 500);
         } else {
           fail();
         }
@@ -118,8 +121,7 @@ export class SettingsController implements HttpController {
       ServerRoutes.Api.User.del,
       (
         req: Request<{}, {}, ServerRoutes.Api.User.DeleteRequest>,
-        res: Response<{}>,
-        next: NextFunction
+        res: Response<{}>
       ) => {
         if (req.session.user?.permissions?.isAdmin) {
           Promise.all(

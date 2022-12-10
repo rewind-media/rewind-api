@@ -1,5 +1,5 @@
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
-import { Express } from "express";
+import { Express, Response, Request } from "express";
 import { HttpController } from "./index";
 import { FaviconResponse } from "favicons";
 
@@ -11,11 +11,12 @@ export class IconController implements HttpController {
 
   attach(app: Express): void {
     this.icons.images.map((i) => {
-      app.get(ServerRoutes.formatIconRoute(i.name), (req, res, next) => {
-        res.send(i.contents);
-      });
+      app.get(
+        ServerRoutes.formatIconRoute(i.name),
+        (req: Request, res: Response<Buffer>) => {
+          res.send(i.contents);
+        }
+      );
     });
-    console.log(JSON.stringify(this.icons.html));
-    console.log(JSON.stringify(this.icons.files));
   }
 }

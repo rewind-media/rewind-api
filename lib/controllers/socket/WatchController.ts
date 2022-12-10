@@ -60,11 +60,9 @@ function mkStreamProps(
 type DestroyStreamFunction = () => Promise<void>;
 type CreateStreamFunction = (props: StreamProps) => Promise<void>;
 
-// TODO rework much of that to take into account the added Cache
 export class WatchController implements SocketController {
   private db: Database;
   private cache: Cache;
-  // TODO this could technically grow infinitely, and is also not shared amongst instances - move it to redis with expiration
   private streamJobQueue: JobQueue<StreamProps, undefined>;
 
   constructor(

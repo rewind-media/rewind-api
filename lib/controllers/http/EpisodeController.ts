@@ -36,6 +36,7 @@ export class EpisodeController implements HttpController {
           })
           .catch(() => res.sendStatus(500))
     );
+
     app.get(
       ServerRoutes.Api.Episode.get,
       (

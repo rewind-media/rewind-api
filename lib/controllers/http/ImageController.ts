@@ -1,9 +1,16 @@
-import { Express } from "express";
+import { Express, Request, Response } from "express";
 import { HttpController } from "./index";
-import { Database, Cache } from "@rewind-media/rewind-common";
+import {
+  Database,
+  Cache,
+  ClientEvents,
+  ClientEventEmitter,
+} from "@rewind-media/rewind-common";
 import { ImageInfo, ServerRoutes } from "@rewind-media/rewind-protocol";
 import { JobQueue } from "@rewind-media/rewind-common";
 import { ServerLog } from "../../log";
+import GetResponse = ServerRoutes.Api.Image.GetResponse;
+import GetParams = ServerRoutes.Api.Image.GetParams;
 
 const log = ServerLog.getChildCategory("ImageController");
 
@@ -23,47 +30,81 @@ export class ImageController implements HttpController {
   }
 
   attach(app: Express): void {
-    app.get(ServerRoutes.Api.Image.image, async (req, res, next) => {
-      const fetchImage = async () => {
-        const image = await this.cache.getImage(imageId);
-        if (image) {
-          await this.cache.expireImage(imageId, 3600);
+    app.get(
+      ServerRoutes.Api.Image.image,
+      async (
+        req: Request<GetParams, GetResponse>,
+        res: Response<GetResponse>
+      ) => {
+        const imageId = req.params.id;
+
+        const fetchImage = this.mkFetchImageFun(imageId);
+        const cachedImage = await fetchImage();
+        if (cachedImage) {
+          res.end(cachedImage);
+          return;
         }
-        return image;
-      };
 
-      const imageId = req.params.id;
-      const cachedImage = await fetchImage();
-      if (cachedImage) {
-        res.end(cachedImage);
-        return;
-      }
-      const imageInfo = await this.db.getImage(imageId);
-      if (!imageInfo) {
-        res.sendStatus(404);
-        return;
-      }
+        const imageInfo = await this.db.getImage(imageId);
+        if (!imageInfo) {
+          res.sendStatus(404);
+          return;
+        }
 
-      return new Promise(async (resolve) => {
-        await this.queue.submit({ payload: imageInfo }, (emitter) => {
-          emitter
-            .on("success", async () => {
-              log.info(`Job succeeded for Image ${imageInfo.id}`);
-              const image = await fetchImage();
-              if (image) {
-                res.end(image);
-              } else {
-                res.sendStatus(501);
-              }
-              resolve(undefined);
-            })
-            .on("fail", (reason) => {
-              res.sendStatus(501);
-              log.error(`Job failed for Image ${imageInfo.id}`, reason);
-              resolve(undefined);
-            });
-        });
-      });
+        return this.runImageJob(imageInfo, fetchImage, res, imageId);
+      }
+    );
+  }
+
+  private async runImageJob(
+    imageInfo: ImageInfo,
+    fetchImage: () => Promise<Buffer | null>,
+    res: Response<GetResponse>,
+    imageId: string
+  ) {
+    await new Promise(async (resolve, reject) => {
+      await this.queue.submit(
+        { payload: imageInfo },
+        this.mkJobPreHook(imageInfo, resolve, reject)
+      );
+      setTimeout(() => reject(`Timed out fetching ${imageInfo.id}`));
     });
+
+    try {
+      const image = await fetchImage();
+      if (image) {
+        res.end(image);
+      } else {
+        res.sendStatus(501);
+      }
+    } catch (reason) {
+      log.error(`Failed to process request for image: ${imageId}`, reason);
+      res.sendStatus(501);
+    }
+  }
+
+  private mkFetchImageFun(imageId: string): () => Promise<Buffer | null> {
+    return async () => {
+      const image = await this.cache.getImage(imageId);
+      if (image) {
+        await this.cache.expireImage(imageId, 3600);
+      }
+      return image;
+    };
+  }
+
+  private mkJobPreHook(
+    imageInfo: ImageInfo,
+    resolve: (value: PromiseLike<undefined> | undefined) => void,
+    reject: (reason: string) => void
+  ) {
+    return (emitter: ClientEventEmitter<ClientEvents<undefined>>) => {
+      emitter
+        .on("success", async () => {
+          log.info(`Job succeeded for Image ${imageInfo.id}`);
+          resolve(undefined);
+        })
+        .on("fail", reject);
+    };
   }
 }

@@ -8,7 +8,6 @@ import {
 import { ServerLog } from "../../log";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 import formatM3u8StreamPath = ServerRoutes.Api.Stream.formatM3u8StreamPath;
-import formatSubtitlePath = ServerRoutes.Api.Stream.formatSubtitlePath;
 import formatM3u8SubtitlePath = ServerRoutes.Api.Stream.formatM3u8SubtitlePath;
 
 const log = ServerLog.getChildCategory("StreamController");
