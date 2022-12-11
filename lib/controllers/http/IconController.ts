@@ -13,7 +13,7 @@ export class IconController implements HttpController {
     this.icons.images.map((i) => {
       app.get(
         ServerRoutes.formatIconRoute(i.name),
-        (req: Request, res: Response<Buffer>) => {
+        (_req: Request, res: Response<Buffer>) => {
           res.send(i.contents);
         }
       );

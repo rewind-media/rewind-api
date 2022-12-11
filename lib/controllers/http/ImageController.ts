@@ -1,5 +1,5 @@
 import { Express, Request, Response } from "express";
-import { HttpController } from "./index";
+import { HttpController, HttpError } from "./index";
 import {
   Database,
   Cache,
@@ -67,8 +67,8 @@ export class ImageController implements HttpController {
         { payload: imageInfo },
         this.mkJobPreHook(imageInfo, resolve, reject)
       );
-      setTimeout(() => reject(`Timed out fetching ${imageInfo.id}`));
-    });
+      setTimeout(() => reject(`Timed out fetching ${imageInfo.id}`), 2000);
+    }).catch((reason) => new HttpError(reason));
 
     try {
       const image = await fetchImage();

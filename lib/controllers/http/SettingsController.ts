@@ -5,7 +5,7 @@ import { Database, hashPassword } from "@rewind-media/rewind-common";
 import "@rewind-media/rewind-protocol";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 import { HttpController } from "./index";
-import { Express, Request, Response, NextFunction } from "express";
+import { Express, Request, Response } from "express";
 import { filterNotNil } from "cantaloupe";
 
 const log = ServerLog.getChildCategory("SettingsController");

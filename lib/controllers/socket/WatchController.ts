@@ -204,6 +204,8 @@ export class WatchController implements SocketController {
           return this.db.getEpisode(props.mediaId);
         case LibraryType.File:
           throw "File type library cannot be streamed";
+        default:
+          throw `Unrecognized library type ${library.type}`;
       }
     } else {
       throw `Library ${props.library} not found`;
@@ -216,10 +218,6 @@ export class WatchController implements SocketController {
       url: formatM3u8IndexPath(sp.id),
     };
   }
-}
-
-function nowPlusOneHour(): Date {
-  return new Date(Date.now() + 3600000);
 }
 
 function nowPlusOneDay(): Date {

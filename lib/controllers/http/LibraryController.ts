@@ -17,7 +17,7 @@ export class LibraryController implements HttpController {
     app.get(
       ServerRoutes.Api.Library.list,
       (
-        req: Request<{}, ServerRoutes.Api.Library.ListResponse>,
+        _req: Request<{}, ServerRoutes.Api.Library.ListResponse>,
         res: Response<ServerRoutes.Api.Library.ListResponse>
       ) => {
         this.db.listLibraries().then((libs) =>

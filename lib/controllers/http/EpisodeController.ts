@@ -1,10 +1,7 @@
 import { Database } from "@rewind-media/rewind-common";
-import { ServerLog } from "../../log";
 import { Express, Request, Response } from "express";
 import { HttpController } from "./index";
 import { ServerRoutes, EpisodeInfo } from "@rewind-media/rewind-protocol";
-
-const log = ServerLog.getChildCategory("EpisodeController");
 
 export class EpisodeController implements HttpController {
   private db: Database;

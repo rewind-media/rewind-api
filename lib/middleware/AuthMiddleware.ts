@@ -1,6 +1,5 @@
 import { HttpMiddleware, SocketMiddleware } from "./models";
 import { Express, Handler, NextFunction } from "express";
-import session from "express-session";
 import * as pp from "passport";
 import * as ppl from "passport-local";
 import crypto from "crypto";
