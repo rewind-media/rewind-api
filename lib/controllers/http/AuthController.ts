@@ -1,4 +1,4 @@
-import { Express } from "express";
+import { Express, Request, Response } from "express";
 import { AuthMiddleware } from "../../middleware/AuthMiddleware";
 import { HttpController } from "./index";
 import "../../declarations";
@@ -12,15 +12,8 @@ export class AuthController implements HttpController {
   }
 
   attach(app: Express) {
-    app.get(ServerRoutes.Api.Auth.verify, (req, res) => {
-      if (req.user) {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(Buffer.from(JSON.stringify(req.user), "utf8"));
-      } else {
-        res.writeHead(401);
-        res.end();
-      }
-    });
+    app.get(ServerRoutes.Api.Auth.verify, this.mkVerifyHandler());
+    app.post(ServerRoutes.Api.Auth.logout, this.mkLogoutHandler());
 
     app.post(
       ServerRoutes.Api.Auth.login,
@@ -28,19 +21,38 @@ export class AuthController implements HttpController {
         failureMessage: true,
         session: true,
       }),
-      function (req, res) {
-        if (req.user) {
-          req.session.user = req.user;
-          req.session.save();
-          res.sendStatus(200);
-        } else {
-          res.sendStatus(403);
-        }
-      }
+      this.mkLoginHandler()
     );
-    app.post(ServerRoutes.Api.Auth.logout, function (req, res) {
+  }
+
+  private mkLogoutHandler() {
+    return (req: Request, res: Response) => {
       console.log("Received logout");
       req.logout(() => res.sendStatus(200));
-    });
+    };
+  }
+
+  private mkLoginHandler() {
+    return (req: Request, res: Response) => {
+      if (req.user) {
+        req.session.user = req.user;
+        req.session.save();
+        res.sendStatus(200);
+      } else {
+        res.sendStatus(403);
+      }
+    };
+  }
+
+  private mkVerifyHandler() {
+    return (req: Request, res: Response) => {
+      if (req.user) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(Buffer.from(JSON.stringify(req.user), "utf8"));
+      } else {
+        res.writeHead(401);
+        res.end();
+      }
+    };
   }
 }

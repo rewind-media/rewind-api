@@ -1,5 +1,5 @@
 import { Express, Request, Response } from "express";
-import { HttpController, HttpError } from "./index";
+import { asyncWrapper, HttpController, HttpError } from "./index";
 import {
   Database,
   Cache,
@@ -30,30 +30,32 @@ export class ImageController implements HttpController {
   }
 
   attach(app: Express): void {
-    app.get(
-      ServerRoutes.Api.Image.image,
-      async (
-        req: Request<GetParams, GetResponse>,
-        res: Response<GetResponse>
-      ) => {
-        const imageId = req.params.id;
+    app.get(ServerRoutes.Api.Image.image, asyncWrapper(this.mkGetHandler()));
+  }
 
-        const fetchImage = this.mkFetchImageFun(imageId);
-        const cachedImage = await fetchImage();
-        if (cachedImage) {
-          res.end(cachedImage);
-          return;
-        }
+  private mkGetHandler() {
+    return async (
+      req: Request<GetParams, GetResponse>,
+      res: Response<GetResponse>
+    ) => {
+      const imageId = req.params.id;
 
-        const imageInfo = await this.db.getImage(imageId);
-        if (!imageInfo) {
-          res.sendStatus(404);
-          return;
-        }
-
-        return this.runImageJob(imageInfo, fetchImage, res, imageId);
+      const fetchImage = this.mkFetchImageFun(imageId);
+      const cachedImage = await fetchImage();
+      if (cachedImage) {
+        res.setHeader("Expires", new Date(Date.now() + 3600000).toUTCString());
+        res.end(cachedImage);
+        return;
       }
-    );
+
+      const imageInfo = await this.db.getImage(imageId);
+      if (!imageInfo) {
+        res.sendStatus(404);
+        return;
+      }
+
+      return this.runImageJob(imageInfo, fetchImage, res, imageId);
+    };
   }
 
   private async runImageJob(
@@ -73,6 +75,7 @@ export class ImageController implements HttpController {
     try {
       const image = await fetchImage();
       if (image) {
+        res.setHeader("Expires", new Date(Date.now() + 3600000).toUTCString());
         res.end(image);
       } else {
         res.sendStatus(501);

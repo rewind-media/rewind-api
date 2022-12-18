@@ -1,5 +1,5 @@
-import { Express, Request } from "express";
-import { HttpController, HttpError } from "./index";
+import { Express, Request, Response } from "express";
+import { asyncWrapper, HttpController, HttpError } from "./index";
 import {
   Cache,
   StreamMetadata,
@@ -17,96 +17,34 @@ export class StreamController implements HttpController {
   }
 
   attach(app: Express): void {
-    app.get(ServerRoutes.Api.Stream.subtitle, async (req, res) => {
-      const streamId = this.parseStreamId(req);
-      if (!req.user)
-        throw new HttpError("Missing user info in request", "FORBIDDEN");
-      const streamMetadata = await this.cache.getStreamMetadata(streamId);
-      if (streamMetadata && streamMetadata.subtitles) {
-        res.writeHead(200, {
-          "Content-Type": "text/vtt",
-        });
-        res.end(streamMetadata.subtitles);
-      } else {
-        throw new HttpError(
-          `Stream ${streamId} - no subtitles found.`,
-          "NOT_FOUND"
-        );
-      }
-    });
+    app.get(
+      ServerRoutes.Api.Stream.subtitle,
+      asyncWrapper(this.mkSubtitleHandler())
+    );
+    app.get(
+      ServerRoutes.Api.Stream.m3u8Stream,
+      asyncWrapper(this.mkM3u8StreamHandler())
+    );
+    app.get(
+      ServerRoutes.Api.Stream.m3u8Index,
+      asyncWrapper(this.mkM3u8IndexHandler())
+    );
+    app.get(
+      ServerRoutes.Api.Stream.m3u8Subtitle,
+      this.mkM3u8SubtitlesHandler()
+    );
+    app.get(
+      ServerRoutes.Api.Stream.initMp4,
+      asyncWrapper(this.mkInitMp4Handler())
+    );
+    app.get(
+      ServerRoutes.Api.Stream.segment,
+      asyncWrapper(this.mkSegmentHandler())
+    );
+  }
 
-    app.get(ServerRoutes.Api.Stream.m3u8Stream, async (req, res) => {
-      const streamId = this.parseStreamId(req);
-      if (!req.user)
-        throw new HttpError("Missing user info in request", "FORBIDDEN");
-      const streamMetadata = await this.cache.getStreamMetadata(streamId);
-      if (streamMetadata) {
-        res.writeHead(200, {
-          "Content-Type": "application/vnd.apple.mpegurl",
-        });
-        res.end(mkM3u8Stream(streamMetadata));
-      } else {
-        throw new HttpError(
-          `Stream ${streamId} - no metadata found.`,
-          "NOT_FOUND"
-        );
-      }
-    });
-
-    app.get(ServerRoutes.Api.Stream.m3u8Index, async (req, res) => {
-      const streamId = this.parseStreamId(req);
-      if (!req.user)
-        throw new HttpError("Missing user info in request", "FORBIDDEN");
-      const streamMetadata = await this.cache.getStreamMetadata(streamId);
-      if (streamMetadata) {
-        res.writeHead(200, {
-          "Content-Type": "application/vnd.apple.mpegurl",
-        });
-        res.end(mkM3u8Index(streamId, streamMetadata));
-      } else {
-        throw new HttpError(
-          `Stream ${streamId} - no metadata found.`,
-          "NOT_FOUND"
-        );
-      }
-    });
-
-    app.get(ServerRoutes.Api.Stream.m3u8Subtitle, async (req, res) => {
-      const streamId = this.parseStreamId(req);
-      if (!req.user)
-        throw new HttpError("Missing user info in request", "FORBIDDEN");
-      const streamMetadata = await this.cache.getStreamMetadata(streamId);
-      if (streamMetadata) {
-        res.writeHead(200, {
-          "Content-Type": "application/vnd.apple.mpegurl",
-        });
-        res.end(mkM3u8Subtitle(streamId, streamMetadata));
-      } else {
-        throw new HttpError(
-          `Stream ${streamId} - no metadata found.`,
-          "NOT_FOUND"
-        );
-      }
-    });
-
-    app.get(ServerRoutes.Api.Stream.initMp4, async (req, res) => {
-      const streamId = this.parseStreamId(req);
-      if (!req.user)
-        throw new HttpError("Missing user info in request", "FORBIDDEN");
-      const initMp4 = await this.cache.getInitMp4(streamId);
-
-      if (initMp4) {
-        res.writeHead(200, { "Content-Type": "video/mp4" });
-        res.end(initMp4);
-      } else {
-        throw new HttpError(
-          `Stream ${streamId} - no ${ServerRoutes.Api.Stream.initMp4} found.`,
-          "NOT_FOUND"
-        );
-      }
-    });
-
-    app.get(ServerRoutes.Api.Stream.segment, async (req, res) => {
+  private mkSegmentHandler() {
+    return async (req: Request, res: Response) => {
       const streamId = this.parseStreamId(req);
       const segment = req.params["segment"];
       if (!req.user)
@@ -127,7 +65,106 @@ export class StreamController implements HttpController {
           "NOT_FOUND"
         );
       }
-    });
+    };
+  }
+
+  private mkInitMp4Handler() {
+    return async (req: Request, res: Response) => {
+      const streamId = this.parseStreamId(req);
+      if (!req.user)
+        throw new HttpError("Missing user info in request", "FORBIDDEN");
+      const initMp4 = await this.cache.getInitMp4(streamId);
+
+      if (initMp4) {
+        res.writeHead(200, { "Content-Type": "video/mp4" });
+        res.end(initMp4);
+      } else {
+        throw new HttpError(
+          `Stream ${streamId} - no ${ServerRoutes.Api.Stream.initMp4} found.`,
+          "NOT_FOUND"
+        );
+      }
+    };
+  }
+
+  private mkM3u8SubtitlesHandler() {
+    return async (req: Request, res: Response) => {
+      const streamId = this.parseStreamId(req);
+      if (!req.user)
+        throw new HttpError("Missing user info in request", "FORBIDDEN");
+      const streamMetadata = await this.cache.getStreamMetadata(streamId);
+      if (streamMetadata) {
+        res.writeHead(200, {
+          "Content-Type": "application/vnd.apple.mpegurl",
+        });
+        res.end(mkM3u8Subtitle(streamId, streamMetadata));
+      } else {
+        throw new HttpError(
+          `Stream ${streamId} - no metadata found.`,
+          "NOT_FOUND"
+        );
+      }
+    };
+  }
+
+  private mkM3u8IndexHandler() {
+    return async (req: Request, res: Response) => {
+      const streamId = this.parseStreamId(req);
+      if (!req.user)
+        throw new HttpError("Missing user info in request", "FORBIDDEN");
+      const streamMetadata = await this.cache.getStreamMetadata(streamId);
+      if (streamMetadata) {
+        res.writeHead(200, {
+          "Content-Type": "application/vnd.apple.mpegurl",
+        });
+        res.end(mkM3u8Index(streamId, streamMetadata));
+      } else {
+        throw new HttpError(
+          `Stream ${streamId} - no metadata found.`,
+          "NOT_FOUND"
+        );
+      }
+    };
+  }
+
+  private mkM3u8StreamHandler() {
+    return async (req: Request, res: Response) => {
+      const streamId = this.parseStreamId(req);
+      if (!req.user)
+        throw new HttpError("Missing user info in request", "FORBIDDEN");
+      const streamMetadata = await this.cache.getStreamMetadata(streamId);
+      if (streamMetadata) {
+        res.writeHead(200, {
+          "Content-Type": "application/vnd.apple.mpegurl",
+        });
+        res.end(mkM3u8Stream(streamMetadata));
+      } else {
+        throw new HttpError(
+          `Stream ${streamId} - no metadata found.`,
+          "NOT_FOUND"
+        );
+      }
+    };
+  }
+
+  private mkSubtitleHandler() {
+    return async (req: Request, res: Response) => {
+      const streamId = this.parseStreamId(req);
+      if (!req.user)
+        throw new HttpError("Missing user info in request", "FORBIDDEN");
+      const streamMetadata = await this.cache.getStreamMetadata(streamId);
+      if (streamMetadata && streamMetadata.subtitles) {
+        res.writeHead(200, {
+          "Content-Type": "text/vtt",
+        });
+        res.end(streamMetadata.subtitles);
+      } else {
+        throw new HttpError(
+          `Stream ${streamId} - no subtitles found.`,
+          "NOT_FOUND"
+        );
+      }
+    };
   }
 
   private parseStreamId<P extends { [key: string]: string }>(req: Request<P>) {

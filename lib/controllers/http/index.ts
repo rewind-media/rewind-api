@@ -1,4 +1,10 @@
-import { Express } from "express";
+import {
+  Express,
+  NextFunction,
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from "express";
+import { ServerLog } from "../../log";
 
 export * from "./AuthController";
 export * from "./HomeController";
@@ -9,6 +15,8 @@ export * from "./SeasonController";
 export * from "./EpisodeController";
 export * from "./SettingsController";
 export * from "./IconController";
+
+const log = ServerLog.getChildCategory("HttpControllers");
 
 export interface HttpController {
   attach: (app: Express) => void;
@@ -80,8 +88,10 @@ export const HTTP_STATUSES = {
 
 export type HttpStatusMessage = keyof typeof HTTP_STATUSES;
 export type HttpStatusCode = typeof HTTP_STATUSES[HttpStatusMessage];
+
 export class HttpError {
   readonly statusCode: HttpStatusCode;
+
   constructor(
     public readonly stack: string,
     public readonly statusMessage: HttpStatusMessage = "INTERNAL_SERVER_ERROR",
@@ -89,4 +99,30 @@ export class HttpError {
   ) {
     this.statusCode = HTTP_STATUSES[statusMessage];
   }
+}
+
+type ExpressHandler<Params, Request, Response, Locals> = (
+  req: ExpressRequest<Params, Response, Request, Locals>,
+  res: ExpressResponse<Response>,
+  next: NextFunction
+) => Promise<undefined | void>;
+
+export function asyncWrapper<Params, Request, Response, Locals>(
+  asyncFn: ExpressHandler<Params, Request, Response, Locals>
+): (
+  ...args: Parameters<ExpressHandler<Params, Request, Response, Locals>>
+) => ReturnType<ExpressHandler<Params, Request, Response, Locals>> {
+  return (
+    ...args: Parameters<ExpressHandler<Params, Request, Response, Locals>>
+  ) => {
+    return asyncFn(...args).catch((e: unknown) => {
+      const res = args[1];
+      log.error(
+        "Error handling async method. Sending 501 status.",
+        JSON.stringify(args[0]),
+        e
+      );
+      res.sendStatus(501);
+    });
+  };
 }

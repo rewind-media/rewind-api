@@ -1,4 +1,4 @@
-import { HttpController } from ".";
+import { asyncWrapper, HttpController } from ".";
 import { Database } from "@rewind-media/rewind-common";
 import { ServerLog } from "../../log";
 import { Express, Request, Response } from "express";
@@ -14,33 +14,36 @@ export class LibraryController implements HttpController {
   }
 
   attach(app: Express): void {
-    app.get(
-      ServerRoutes.Api.Library.list,
-      (
-        _req: Request<{}, ServerRoutes.Api.Library.ListResponse>,
-        res: Response<ServerRoutes.Api.Library.ListResponse>
-      ) => {
-        this.db.listLibraries().then((libs) =>
-          res.send({
-            libraries: libs,
-          })
-        );
-      }
-    );
+    app.get(ServerRoutes.Api.Library.list, asyncWrapper(this.mkListHandler()));
+    app.get(ServerRoutes.Api.Library.get, asyncWrapper(this.mkGetHandler()));
+  }
 
-    app.get(
-      ServerRoutes.Api.Library.get,
-      (req: Request<ServerRoutes.Api.Library.GetParams>, res: Response) => {
-        this.db.getLibrary(req.params.libraryId).then((library) => {
-          if (library) {
-            res.send({
-              library: library,
-            });
-          } else {
-            log.error(`Failed to find library ${req.params.libraryId}`);
-          }
+  private mkListHandler() {
+    return async (
+      _req: Request<{}, ServerRoutes.Api.Library.ListResponse>,
+      res: Response<ServerRoutes.Api.Library.ListResponse>
+    ) => {
+      const libs = await this.db.listLibraries();
+      res.send({
+        libraries: libs,
+      });
+    };
+  }
+
+  private mkGetHandler() {
+    return async (
+      req: Request<ServerRoutes.Api.Library.GetParams>,
+      res: Response
+    ) => {
+      const library = this.db.getLibrary(req.params.libraryId);
+      if (library) {
+        res.send({
+          library: library,
         });
+      } else {
+        log.error(`Failed to find library ${req.params.libraryId}`);
+        res.sendStatus(404);
       }
-    );
+    };
   }
 }
