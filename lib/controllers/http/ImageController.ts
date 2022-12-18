@@ -11,6 +11,7 @@ import { JobQueue } from "@rewind-media/rewind-common";
 import { ServerLog } from "../../log";
 import GetResponse = ServerRoutes.Api.Image.GetResponse;
 import GetParams = ServerRoutes.Api.Image.GetParams;
+import { Duration } from "durr";
 
 const log = ServerLog.getChildCategory("ImageController");
 
@@ -43,7 +44,7 @@ export class ImageController implements HttpController {
       const fetchImage = this.mkFetchImageFun(imageId);
       const cachedImage = await fetchImage();
       if (cachedImage) {
-        res.setHeader("Expires", new Date(Date.now() + 3600000).toUTCString());
+        res.setHeader("Expires", Duration.hours(1).after().toUTCString());
         res.end(cachedImage);
         return;
       }
@@ -69,13 +70,16 @@ export class ImageController implements HttpController {
         { payload: imageInfo },
         this.mkJobPreHook(imageInfo, resolve, reject)
       );
-      setTimeout(() => reject(`Timed out fetching ${imageInfo.id}`), 2000);
+      setTimeout(
+        () => reject(`Timed out fetching ${imageInfo.id}`),
+        Duration.seconds(2).millis
+      );
     }).catch((reason) => new HttpError(reason));
 
     try {
       const image = await fetchImage();
       if (image) {
-        res.setHeader("Expires", new Date(Date.now() + 3600000).toUTCString());
+        res.setHeader("Expires", Duration.hours(1).after().toUTCString());
         res.end(image);
       } else {
         res.sendStatus(501);

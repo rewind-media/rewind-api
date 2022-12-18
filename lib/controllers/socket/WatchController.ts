@@ -25,6 +25,7 @@ import { filterNotNil } from "cantaloupe";
 import { FFProbeStream } from "ffprobe";
 import { isNil } from "lodash";
 import formatM3u8IndexPath = ServerRoutes.Api.Stream.formatM3u8IndexPath;
+import { Duration } from "durr";
 
 const log = ServerLog.getChildCategory("WatchController");
 
@@ -87,7 +88,7 @@ export class WatchController implements SocketController {
     return this.cache.put(
       `ClientId:${socket.id}:StreamId`,
       stream.id,
-      nowPlusOneDay()
+      Duration.days(1).after()
     );
   }
 
@@ -105,7 +106,11 @@ export class WatchController implements SocketController {
 
   private setJobId(streamId: string, jobId: string) {
     // TODO exp Should be based on duration of stream
-    return this.cache.put(`StreamId:${streamId}:JobId`, jobId, nowPlusOneDay());
+    return this.cache.put(
+      `StreamId:${streamId}:JobId`,
+      jobId,
+      Duration.days(1).after()
+    );
   }
   mkCancelStreamHandler(socket: SocketIoServerSocket): DestroyStreamFunction {
     return async () => {
@@ -218,8 +223,4 @@ export class WatchController implements SocketController {
       url: formatM3u8IndexPath(sp.id),
     };
   }
-}
-
-function nowPlusOneDay(): Date {
-  return new Date(Date.now() + 24 * 3600000);
 }
