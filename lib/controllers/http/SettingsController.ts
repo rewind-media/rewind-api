@@ -1,10 +1,10 @@
 import { randomUUID } from "crypto";
 import crypto from "crypto";
-import { ServerLog } from "../../log";
+import { ServerLog } from "../../log.js";
 import { Database, hashPassword } from "@rewind-media/rewind-common";
 import "@rewind-media/rewind-protocol";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
-import { asyncWrapper, HttpController } from "./index";
+import { asyncWrapper, HttpController } from "./index.js";
 import { Express, Request, Response } from "express";
 import { filterNotNil } from "cantaloupe";
 

@@ -1,4 +1,4 @@
-import { HttpMiddleware } from "./models";
+import { HttpMiddleware } from "./models.js";
 import { Express } from "express";
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";

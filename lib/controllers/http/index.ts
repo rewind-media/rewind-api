@@ -4,17 +4,17 @@ import {
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from "express";
-import { ServerLog } from "../../log";
+import { ServerLog } from "../../log.js";
 
-export * from "./AuthController";
-export * from "./HomeController";
-export * from "./StreamController";
-export * from "./LibraryController";
-export * from "./ShowController";
-export * from "./SeasonController";
-export * from "./EpisodeController";
-export * from "./SettingsController";
-export * from "./IconController";
+export * from "./AuthController.js";
+export * from "./HomeController.js";
+export * from "./StreamController.js";
+export * from "./LibraryController.js";
+export * from "./ShowController.js";
+export * from "./SeasonController.js";
+export * from "./EpisodeController.js";
+export * from "./SettingsController.js";
+export * from "./IconController.js";
 
 const log = ServerLog.getChildCategory("HttpControllers");
 

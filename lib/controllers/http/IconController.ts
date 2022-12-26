@@ -1,6 +1,6 @@
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 import { Express, Response, Request } from "express";
-import { HttpController } from "./index";
+import { HttpController } from "./index.js";
 import { FaviconImage, FaviconResponse } from "favicons";
 
 export class IconController implements HttpController {

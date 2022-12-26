@@ -1,6 +1,6 @@
-import { asyncWrapper, HttpController } from ".";
+import { asyncWrapper, HttpController } from "./index.js";
 import { Database } from "@rewind-media/rewind-common";
-import { ServerLog } from "../../log";
+import { ServerLog } from "../../log.js";
 import { Express, Request, Response } from "express";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 

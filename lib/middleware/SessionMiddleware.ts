@@ -1,11 +1,11 @@
-import { HttpMiddleware, SocketMiddleware } from "./models";
+import { HttpMiddleware, SocketMiddleware } from "./models.js";
 import { Express, NextFunction, RequestHandler } from "express";
 import session from "express-session";
 import { randomUUID } from "crypto";
-import { SocketIoServer } from "../controllers/socket";
+import { SocketIoServer } from "../controllers/socket/index.js";
 import sharedsession from "express-socket.io-session";
 import { Database } from "@rewind-media/rewind-common";
-import { ServerLog } from "../log";
+import { ServerLog } from "../log.js";
 
 const log = ServerLog.getChildCategory("SessionMiddleware");
 

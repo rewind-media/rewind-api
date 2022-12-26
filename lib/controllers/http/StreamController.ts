@@ -1,5 +1,5 @@
 import { Express, Request, Response } from "express";
-import { asyncWrapper, HttpController, HttpError } from "./index";
+import { asyncWrapper, HttpController, HttpError } from "./index.js";
 import {
   Cache,
   StreamMetadata,

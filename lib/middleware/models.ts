@@ -1,5 +1,5 @@
 import { Express } from "express";
-import { SocketIoServer } from "../controllers/socket";
+import { SocketIoServer } from "../controllers/socket/index.js";
 
 export interface HttpMiddleware {
   attachHttp(app: Express): void;

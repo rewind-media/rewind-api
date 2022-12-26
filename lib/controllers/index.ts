@@ -1,2 +1,2 @@
-export * as http from "./http";
-export * as socket from "./socket";
+export * as http from "./http/index.js";
+export * as socket from "./socket/index.js";

@@ -1,6 +1,6 @@
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 import { Express, Request, Response } from "express";
-import { HttpController } from "./index";
+import { HttpController } from "./index.js";
 
 export class HomeController implements HttpController {
   attach(app: Express): void {

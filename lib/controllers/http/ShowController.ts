@@ -1,7 +1,7 @@
 import { Database } from "@rewind-media/rewind-common";
-import { ServerLog } from "../../log";
+import { ServerLog } from "../../log.js";
 import { Express, Request, Response } from "express";
-import { asyncWrapper, HttpController } from "./index";
+import { asyncWrapper, HttpController } from "./index.js";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
 
 const log = ServerLog.getChildCategory("ShowController");

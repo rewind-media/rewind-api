@@ -8,19 +8,19 @@ import {
   EpisodeController,
   SettingsController,
   IconController,
-} from "./controllers/http";
+} from "./controllers/http/index.js";
 import express from "express";
 import http from "http";
 import {
   WatchController,
   InterServerEvents,
   SocketData,
-} from "./controllers/socket";
-import { SessionMiddleware } from "./middleware/SessionMiddleware";
-import { ParserMiddleware } from "./middleware/ParserMiddleware";
-import { AuthMiddleware } from "./middleware/AuthMiddleware";
+} from "./controllers/socket/index.js";
+import { SessionMiddleware } from "./middleware/SessionMiddleware.js";
+import { ParserMiddleware } from "./middleware/ParserMiddleware.js";
+import { AuthMiddleware } from "./middleware/AuthMiddleware.js";
 import { Server } from "socket.io";
-import { ImageController } from "./controllers/http/ImageController";
+import { ImageController } from "./controllers/http/ImageController.js";
 import {
   Database,
   loadConfig,
@@ -28,15 +28,18 @@ import {
   RedisCache,
   RedisJobQueue,
 } from "@rewind-media/rewind-common";
-import { ServerLog } from "./log";
+import { ServerLog } from "./log.js";
 import {
   ClientToServerEvents,
   ImageInfo,
   ServerToClientEvents,
   StreamProps,
 } from "@rewind-media/rewind-protocol";
-import Redis from "ioredis";
-import { loadFavIcons } from "./favicons";
+import { loadFavIcons } from "./favicons.js";
+
+import RedisModule from "ioredis";
+// TODO: https://github.com/luin/ioredis/issues/1642
+const Redis = RedisModule.default;
 
 const log = ServerLog.getChildCategory("main");
 const config = loadConfig();

@@ -3,8 +3,8 @@ import {
   SocketController,
   SocketIoServer,
   SocketIoServerSocket,
-} from "./index";
-import { ServerLog } from "../../log";
+} from "./index.js";
+import { ServerLog } from "../../log.js";
 import {
   CreateEpisodeHlsStreamRequest,
   HlsStreamProps,
@@ -20,24 +20,18 @@ import {
   Cache,
   JobStatus,
 } from "@rewind-media/rewind-common";
-import { flow, filter, first } from "lodash/fp";
-import { filterNotNil } from "cantaloupe";
-import { FFProbeStream } from "ffprobe";
-import { isNil } from "lodash";
 import formatM3u8IndexPath = ServerRoutes.Api.Stream.formatM3u8IndexPath;
 import { Duration } from "durr";
+import { List } from "immutable";
 
 const log = ServerLog.getChildCategory("WatchController");
 
 function extractDuration(media: EpisodeInfo) {
   return (
     media.info.format.duration ||
-    first(
-      flow(
-        filterNotNil,
-        filter((it: FFProbeStream) => isNil(it.duration))
-      )(media?.info.streams)
-    )?.duration
+    List(media?.info.streams)
+      .filter((it) => it && it.duration)
+      .first()?.duration
   );
 }
 

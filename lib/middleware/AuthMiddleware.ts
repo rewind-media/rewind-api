@@ -1,11 +1,11 @@
-import { HttpMiddleware, SocketMiddleware } from "./models";
+import { HttpMiddleware, SocketMiddleware } from "./models.js";
 import { Express, Handler, NextFunction } from "express";
 import * as pp from "passport";
 import * as ppl from "passport-local";
 import crypto from "crypto";
-import { SocketIoServer } from "../controllers/socket";
 import { Database, hashPassword } from "@rewind-media/rewind-common";
-import { ServerLog } from "../log";
+import { ServerLog } from "../log.js";
+import { SocketIoServer } from "../controllers/socket/index.js";
 
 const log = ServerLog.getChildCategory("AuthMiddleware");
 

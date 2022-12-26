@@ -1,5 +1,5 @@
 import { Express, Request, Response } from "express";
-import { asyncWrapper, HttpController, HttpError } from "./index";
+import { asyncWrapper, HttpController, HttpError } from "./index.js";
 import {
   Database,
   Cache,
@@ -8,7 +8,7 @@ import {
 } from "@rewind-media/rewind-common";
 import { ImageInfo, ServerRoutes } from "@rewind-media/rewind-protocol";
 import { JobQueue } from "@rewind-media/rewind-common";
-import { ServerLog } from "../../log";
+import { ServerLog } from "../../log.js";
 import GetResponse = ServerRoutes.Api.Image.GetResponse;
 import GetParams = ServerRoutes.Api.Image.GetParams;
 import { Duration } from "durr";
