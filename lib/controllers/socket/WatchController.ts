@@ -14,12 +14,7 @@ import {
   EpisodeInfo,
   StreamProps,
 } from "@rewind-media/rewind-protocol";
-import {
-  Database,
-  JobQueue,
-  Cache,
-  JobStatus,
-} from "@rewind-media/rewind-common";
+import { Database, JobQueue, Cache } from "@rewind-media/rewind-common";
 import formatM3u8IndexPath = ServerRoutes.Api.Stream.formatM3u8IndexPath;
 import { Duration } from "durr";
 import { List } from "immutable";
@@ -141,13 +136,10 @@ export class WatchController implements SocketController {
           payload: streamProps,
         },
         (emitter) =>
-          emitter.on("status", (status) => {
-            switch (status) {
-              case JobStatus.START:
-                socket.emit("createStreamCallback", {
-                  streamProps: WatchController.toHlsStreamProps(streamProps),
-                });
-            }
+          emitter.on("start", () => {
+            socket.emit("createStreamCallback", {
+              streamProps: WatchController.toHlsStreamProps(streamProps),
+            });
           })
       );
 
