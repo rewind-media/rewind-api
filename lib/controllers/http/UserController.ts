@@ -10,7 +10,7 @@ import { filterNotNil } from "cantaloupe";
 
 const log = ServerLog.getChildCategory("SettingsController");
 
-export class SettingsController implements HttpController {
+export class UserController implements HttpController {
   private db: Database;
 
   constructor(db: Database) {

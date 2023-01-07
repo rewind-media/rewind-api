@@ -6,7 +6,7 @@ import {
   SeasonController,
   LibraryController,
   EpisodeController,
-  SettingsController,
+  UserController,
   IconController,
 } from "./controllers/http/index.js";
 import express from "express";
@@ -65,7 +65,7 @@ mkMongoDatabase(config.databaseConfig).then(async (db: Database) => {
   const homeController = new HomeController();
   const streamController = new StreamController(cache);
 
-  const settingsController = new SettingsController(db);
+  const settingsController = new UserController(db);
   const iconController = new IconController(favIcons);
   const watchController = new WatchController(db, cache, streamJobQueue);
   const libraryController = new LibraryController(db);
