@@ -13,7 +13,7 @@ export * from "./LibraryController.js";
 export * from "./ShowController.js";
 export * from "./SeasonController.js";
 export * from "./EpisodeController.js";
-export * from "./SettingsController.js";
+export * from "./UserController.js";
 export * from "./IconController.js";
 
 const log = ServerLog.getChildCategory("HttpControllers");
@@ -117,11 +117,7 @@ export function asyncWrapper<Params, Request, Response, Locals>(
   ) => {
     return asyncFn(...args).catch((e: unknown) => {
       const res = args[1];
-      log.error(
-        "Error handling async method. Sending 501 status.",
-        JSON.stringify(args[0]),
-        e
-      );
+      log.error("Error handling async method. Sending 501 status.", args[0], e);
       res.sendStatus(501);
     });
   };
