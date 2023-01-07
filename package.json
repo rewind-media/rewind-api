@@ -1,6 +1,6 @@
 {
   "name": "@rewind-media/rewind-api",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "license": "AGPLv3",
   "description": "Public API for Rewind.",
   "repository": {
