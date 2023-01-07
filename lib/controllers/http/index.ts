@@ -87,7 +87,7 @@ export const HTTP_STATUSES = {
 } as const;
 
 export type HttpStatusMessage = keyof typeof HTTP_STATUSES;
-export type HttpStatusCode = typeof HTTP_STATUSES[HttpStatusMessage];
+export type HttpStatusCode = (typeof HTTP_STATUSES)[HttpStatusMessage];
 
 export class HttpError {
   readonly statusCode: HttpStatusCode;
