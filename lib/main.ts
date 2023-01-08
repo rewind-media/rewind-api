@@ -38,6 +38,7 @@ import {
 import { loadFavIcons } from "./favicons.js";
 
 import RedisModule from "ioredis";
+import { Duration } from "durr";
 // TODO: https://github.com/luin/ioredis/issues/1642
 const Redis = RedisModule.default;
 
@@ -55,7 +56,10 @@ mkMongoDatabase(config.databaseConfig).then(async (db: Database) => {
     InterServerEvents,
     SocketData
   >(server, {
+    // TODO include these in config
     transports: ["websocket", "polling"],
+    pingInterval: Duration.seconds(5).millis,
+    pingTimeout: Duration.seconds(15).millis,
   });
   const streamJobQueue = new RedisJobQueue<StreamProps, undefined>(
     redis,
