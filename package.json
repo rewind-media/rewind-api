@@ -13,8 +13,8 @@
   "private": false,
   "dependencies": {
     "@jsbits/escape-regex-str": "^1.0.3",
-    "@rewind-media/rewind-common": "^0.1.44",
-    "@rewind-media/rewind-protocol": "^0.1.17",
+    "@rewind-media/rewind-common": "^0.1.45",
+    "@rewind-media/rewind-protocol": "^0.1.18",
     "@rewind-media/rewind-web": "^0.1.12",
     "@svgr/webpack": "^6.5.1",
     "@testing-library/jest-dom": "^5.16.5",
