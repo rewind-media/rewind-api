@@ -103,7 +103,9 @@ export class WatchController implements SocketController {
   }
   mkCancelStreamHandler(socket: SocketIoServerSocket): DestroyStreamFunction {
     return async () => {
+      log.info(`Got cancelStream event!`);
       const streamId = await this.getStreamId(socket);
+      log.info(`Cancelling stream ${streamId}`);
       if (streamId) {
         const jobId = await this.getJobId(streamId);
         await this.delJobId(streamId);
