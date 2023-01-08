@@ -1,15 +1,14 @@
-import { HttpMiddleware, SocketMiddleware } from "./models.js";
-import { Express, Handler, NextFunction } from "express";
+import { HttpMiddleware } from "./models.js";
+import { Express, Handler } from "express";
 import * as pp from "passport";
 import * as ppl from "passport-local";
 import crypto from "crypto";
 import { Database, hashPassword } from "@rewind-media/rewind-common";
 import { ServerLog } from "../log.js";
-import { SocketIoServer } from "../controllers/socket/index.js";
 
 const log = ServerLog.getChildCategory("AuthMiddleware");
 
-export class AuthMiddleware implements HttpMiddleware, SocketMiddleware {
+export class AuthMiddleware implements HttpMiddleware {
   readonly passport: pp.Authenticator<
     Handler,
     any,
@@ -19,6 +18,7 @@ export class AuthMiddleware implements HttpMiddleware, SocketMiddleware {
   private readonly initialize: Handler;
   private readonly session: Handler;
   private readonly authenticate: Handler;
+  // private readonly authorize: Handler;
 
   constructor(db: Database) {
     this.passport = new pp.Passport();
@@ -73,13 +73,14 @@ export class AuthMiddleware implements HttpMiddleware, SocketMiddleware {
         });
       })
     );
-
-    this.initialize = this.passport.initialize();
-    this.session = this.passport.session();
-    this.authenticate = this.passport.authenticate("session", {
+    const authSettings = {
       failureMessage: true,
       session: true,
-    });
+    };
+    this.initialize = this.passport.initialize();
+    this.session = this.passport.session();
+    this.authenticate = this.passport.authenticate("session", authSettings);
+    // this.authorize = this.passport.authorize("session", authSettings);
   }
 
   // TODO verify session password against db password and destroy user session if it doesn't match
@@ -87,25 +88,6 @@ export class AuthMiddleware implements HttpMiddleware, SocketMiddleware {
     app.use(this.initialize);
     app.use(this.session);
     app.use(this.authenticate);
-  }
-  attachSocket(socket: SocketIoServer) {
-    socket.use((socket, next) =>
-      this.initialize(socket.request as any, {} as any, <NextFunction>next)
-    );
-    socket.use((socket, next) =>
-      this.session(socket.request as any, {} as any, <NextFunction>next)
-    );
-    socket.use((socket, next) =>
-      this.authenticate(socket.request as any, {} as any, <NextFunction>next)
-    );
-    socket.use((socket, next) => {
-      const user = (socket.request as any).user;
-      log.info("in Socket auth middleware: " + JSON.stringify(user));
-      if (user) {
-        next();
-      } else {
-        socket.disconnect(false);
-      }
-    });
+    // app.use(this.authorize);
   }
 }

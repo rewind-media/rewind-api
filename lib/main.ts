@@ -11,15 +11,9 @@ import {
 } from "./controllers/http/index.js";
 import express from "express";
 import http from "http";
-import {
-  WatchController,
-  InterServerEvents,
-  SocketData,
-} from "./controllers/socket/index.js";
 import { SessionMiddleware } from "./middleware/SessionMiddleware.js";
 import { ParserMiddleware } from "./middleware/ParserMiddleware.js";
 import { AuthMiddleware } from "./middleware/AuthMiddleware.js";
-import { Server } from "socket.io";
 import { ImageController } from "./controllers/http/ImageController.js";
 import {
   Database,
@@ -29,16 +23,10 @@ import {
   RedisJobQueue,
 } from "@rewind-media/rewind-common";
 import { ServerLog } from "./log.js";
-import {
-  ClientToServerEvents,
-  ImageInfo,
-  ServerToClientEvents,
-  StreamProps,
-} from "@rewind-media/rewind-protocol";
+import { ImageInfo, StreamProps } from "@rewind-media/rewind-protocol";
 import { loadFavIcons } from "./favicons.js";
 
 import RedisModule from "ioredis";
-import { Duration } from "durr";
 // TODO: https://github.com/luin/ioredis/issues/1642
 const Redis = RedisModule.default;
 
@@ -50,28 +38,16 @@ mkMongoDatabase(config.databaseConfig).then(async (db: Database) => {
   const favIcons = await loadFavIcons();
   const app = express();
   const server = http.createServer(app);
-  const io = new Server<
-    ClientToServerEvents,
-    ServerToClientEvents,
-    InterServerEvents,
-    SocketData
-  >(server, {
-    // TODO include these in config
-    transports: ["websocket", "polling"],
-    pingInterval: Duration.seconds(5).millis,
-    pingTimeout: Duration.seconds(15).millis,
-  });
   const streamJobQueue = new RedisJobQueue<StreamProps, undefined>(
     redis,
     "Stream"
   );
   const imageJobQueue = new RedisJobQueue<ImageInfo, undefined>(redis, "Image");
   const homeController = new HomeController();
-  const streamController = new StreamController(cache);
+  const streamController = new StreamController(cache, db, streamJobQueue);
 
   const settingsController = new UserController(db);
   const iconController = new IconController(favIcons);
-  const watchController = new WatchController(db, cache, streamJobQueue);
   const libraryController = new LibraryController(db);
   const showController = new ShowController(db);
   const seasonController = new SeasonController(db);
@@ -80,14 +56,13 @@ mkMongoDatabase(config.databaseConfig).then(async (db: Database) => {
   const sessionMiddleware = new SessionMiddleware(db);
   const parserMiddleware = new ParserMiddleware();
   const authMiddleware = new AuthMiddleware(db);
-  const auth = new AuthController(authMiddleware);
+  const auth = new AuthController();
 
   sessionMiddleware.attachHttp(app);
-  sessionMiddleware.attachSocket(io);
 
   parserMiddleware.attachHttp(app);
   authMiddleware.attachHttp(app);
-  authMiddleware.attachSocket(io);
+  homeController.attach(app); // last to catch all
 
   auth.attach(app);
 
@@ -99,9 +74,6 @@ mkMongoDatabase(config.databaseConfig).then(async (db: Database) => {
   seasonController.attach(app);
   episodeController.attach(app);
   settingsController.attach(app);
-  homeController.attach(app); // last to catch all
-
-  watchController.attach(io);
 
   server.listen(8080, () => {
     log.info(`Rewind listening on port ${8080}`);

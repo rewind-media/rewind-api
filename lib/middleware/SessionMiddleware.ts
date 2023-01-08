@@ -1,15 +1,13 @@
-import { HttpMiddleware, SocketMiddleware } from "./models.js";
-import { Express, NextFunction, RequestHandler } from "express";
+import { HttpMiddleware } from "./models.js";
+import { Express, RequestHandler } from "express";
 import session from "express-session";
 import { randomUUID } from "crypto";
-import { SocketIoServer } from "../controllers/socket/index.js";
-import sharedsession from "express-socket.io-session";
 import { Database } from "@rewind-media/rewind-common";
 import { ServerLog } from "../log.js";
 
 const log = ServerLog.getChildCategory("SessionMiddleware");
 
-export class SessionMiddleware implements HttpMiddleware, SocketMiddleware {
+export class SessionMiddleware implements HttpMiddleware {
   private readonly session: RequestHandler;
   constructor(db: Database) {
     this.session = session({
@@ -24,15 +22,5 @@ export class SessionMiddleware implements HttpMiddleware, SocketMiddleware {
 
   attachHttp(app: Express) {
     app.use(this.session);
-  }
-  attachSocket(socket: SocketIoServer) {
-    socket.use((socket, next) =>
-      this.session(socket.request as any, {} as any, <NextFunction>next)
-    );
-    socket.use(
-      sharedsession(this.session, {
-        autoSave: true,
-      })
-    );
   }
 }
