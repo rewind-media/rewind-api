@@ -56,7 +56,7 @@ mkMongoDatabase(config.databaseConfig).then(async (db: Database) => {
   const sessionMiddleware = new SessionMiddleware(db);
   const parserMiddleware = new ParserMiddleware();
   const authMiddleware = new AuthMiddleware(db);
-  const auth = new AuthController();
+  const auth = new AuthController(authMiddleware);
 
   sessionMiddleware.attachHttp(app);
 

@@ -2,15 +2,23 @@ import { Express, Request, Response } from "express";
 import { HttpController } from "./index.js";
 import "../../declarations.js";
 import { ServerRoutes } from "@rewind-media/rewind-protocol";
+import { AuthMiddleware } from "../../middleware/AuthMiddleware.js";
 
 export class AuthController implements HttpController {
-  constructor() {}
+  constructor(private authMiddleware: AuthMiddleware) {}
 
   attach(app: Express) {
     app.get(ServerRoutes.Api.Auth.verify, this.mkVerifyHandler());
     app.post(ServerRoutes.Api.Auth.logout, this.mkLogoutHandler());
 
-    app.post(ServerRoutes.Api.Auth.login, this.mkLoginHandler());
+    app.post(
+      ServerRoutes.Api.Auth.login,
+      this.authMiddleware.passport.authenticate("local", {
+        failureMessage: true,
+        session: true,
+      }),
+      this.mkLoginHandler()
+    );
     app.use((req, res, next) => {
       if (!req.user) {
         res.redirect(ServerRoutes.root);
