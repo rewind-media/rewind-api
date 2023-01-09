@@ -15,7 +15,7 @@
     "@jsbits/escape-regex-str": "^1.0.3",
     "@rewind-media/rewind-common": "^0.1.46",
     "@rewind-media/rewind-protocol": "^0.1.19",
-    "@rewind-media/rewind-web": "^0.1.13",
+    "@rewind-media/rewind-web": "^0.1.14",
     "@svgr/webpack": "^6.5.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
