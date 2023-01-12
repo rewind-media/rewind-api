@@ -387,6 +387,7 @@ function mkM3u8Stream(streamMetadata: StreamMetadata) {
   return (
     "#EXTM3U\n" +
     "#EXT-X-VERSION:7\n" +
+    "#EXT-X-PLAYLIST-TYPE:EVENT\n" +
     "#EXT-X-TARGETDURATION:5\n" +
     "#EXT-X-MEDIA-SEQUENCE:0\n" +
     '#EXT-X-MAP:URI="init-stream.mp4"\n' +
